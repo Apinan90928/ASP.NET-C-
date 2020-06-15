@@ -1,0 +1,89 @@
+/*FROM LOGIN*/
+        string constr = ConfigurationManager.ConnectionStrings["ConnRDLC"].ConnectionString;
+        
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (IsPostBack == true)
+            {
+            }
+            else
+            {
+                Session["S_US_CODE"] = null;
+                Session["S_Username"] = null;
+                Session["S_US_ROLES"] = null;
+                Session["S_stat"] = null;
+                lbStatus.Text = "";
+            }
+        }
+        
+        
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            if (txtPassword.Text == "")
+            {
+                lbStatus.Text = "***********";
+            }
+            else
+            {
+                ClientScript.RegisterClientScriptBlock(GetType(), "sas", "<script> alert('" + Session["mt_link_Open"] + "');</script>", false);
+                using (SqlConnection conn = new SqlConnection(constr))
+                {
+                    conn.Open();
+                    SqlCommand cmdSQL = new SqlCommand();
+                    cmdSQL.Connection = conn;
+                    cmdSQL.CommandText = "SELECT * " +
+                    " FROM USERS" +
+                    " WHERE US_NAME = '" + txtUsername.Text + "'" +
+                    " AND US_PASSWORD = '" + txtPassword.Text + "'";
+                    cmdSQL.CommandType = CommandType.Text;
+                    SqlDataReader dr_data = cmdSQL.ExecuteReader();
+                    while (dr_data.Read())
+                    {
+                        Session["S_US_CODE"] = dr_data["US_CODE"].ToString();
+                        Session["S_Username"] = dr_data["US_NAME"].ToString();
+                        Session["S_US_ROLES"] = dr_data["US_ROLES"].ToString();
+                        Session["S_stat"] = "1";
+                    }
+                    conn.Close();
+
+                    if (Session["S_US_CODE"] != null)
+                    {
+                        Response.Redirect("~/" + Session["mt_link_Open"]);
+                        lbStatus.Text = "";
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Login.aspx");
+                    }
+                }
+            }
+        }
+        
+
+/*FROM OTHER*/
+ protected void Page_Load(object sender, EventArgs e)
+        {
+            if (IsPostBack == true)
+            {
+            }
+            else
+            {
+                string Roles_ = "" + Session["S_US_ROLES"];
+                if (Session["S_US_CODE"] != null && Roles_ == "ADMIN")
+                {
+                    rdbProduct.Checked = true;
+                    rdbTarget.Checked = false;
+                    Session["mt_link_Open"] = "ProductOrTarget.aspx";
+                }
+                else if (Session["S_US_CODE"] == null)
+                {
+                    Session["mt_link_Open"] = "ProductOrTarget.aspx";
+                    Response.Redirect("~/Login.aspx");
+                }
+                else
+                {
+                    ClientScript.RegisterClientScriptBlock(GetType(), "sas", "<script> alert('คุณไม่ได้รับสิทธิ์นี้');</script>", false);
+                    Response.Redirect("~/Default.aspx");
+                }
+            }
+        }
