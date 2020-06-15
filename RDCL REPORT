@@ -1,0 +1,62 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using Microsoft.Reporting.WebForms;
+
+string constr = ConfigurationManager.ConnectionStrings["ConnRDLC"].ConnectionString;
+/*<add name="ConnRDLC" connectionString="Data Source=192.168.13.15;Initial Catalog=RDLC;Persist Security Info=True;User ID=sa;Password=orion_1024"
+      providerName="System.Data.SqlClient" />*/
+
+ private DataSet GetData(string SM, string REPORT_NAME)
+        {
+            //ClientScript.RegisterClientScriptBlock(GetType(), "sas", "<script> alert('" + INVNO + "');</script>", false);
+            string conString = ConfigurationManager.ConnectionStrings["RDLCConn"].ConnectionString;
+            SqlCommand cmd = new SqlCommand();
+            cmd = new SqlCommand("" +
+          " SELECT	DATE_, FIRST_MTD_SALE, FIRST_YTD_SALE, LAST_MTD_SALE, LAST_YTD_SALE, MTD_01, MTD_02, MTD_03, MTD_04, MTD_05, " +
+          " MTD_TARGET, PRODUCT_LINE, PRODUCT_NAME, REPORT_NAME, SM, STATUS, SUP, SYS_ID, SYS_ID2, " +
+          " TARGET_01, TARGET_02, TARGET_03, TARGET_04, TARGET_05, TARGET_06,0 TARGET_07,0 TARGET_08,0 TARGET_09,0 TARGET_10,0 TARGET_11,0 TARGET_12, " +
+          " TEAM, TYPE_01, TYPE_02, TYPE_03, TYPE_04, TYPE_05, VALUE_, YEAR_, YTD_01, YTD_02, YTD_03, YTD_04, YTD_05, YTD_TARGET " +
+          " FROM NV_DAILY_2020 " +
+          " WHERE SM IN('" + SM + "')  " +
+          " AND PRODUCT_LINE IN('601')" +
+          " AND REPORT_NAME IN('" + REPORT_NAME + "')");
+            using (SqlConnection con = new SqlConnection(conString))
+            {
+                using (SqlDataAdapter sda = new SqlDataAdapter())
+                {
+                    cmd.Connection = con;
+                    sda.SelectCommand = cmd;
+                    using (DataSet dsitems = new DataSet())
+                    {
+                        sda.Fill(dsitems);
+                        return dsitems;
+                    }
+                }
+            }
+        }
+        
+     private void Get_ReportOT(string SM, string REPORT_NAME, string NameReport)
+        {
+            this.ReportViewer1.Visible = true;
+            //gvHead.Visible = false;
+            ReportViewer1.ProcessingMode = ProcessingMode.Local;
+            ReportViewer1.LocalReport.ReportPath = Server.MapPath("~/Report/" + NameReport);
+            DataSet dsitems = GetData(SM, REPORT_NAME);
+            ReportDataSource datasource = new ReportDataSource("DataSet1", dsitems.Tables[0]);
+            this.ReportViewer1.LocalReport.DataSources.Clear();
+            this.ReportViewer1.LocalReport.DataSources.Add(datasource);
+            this.ReportViewer1.LocalReport.Refresh();
+            this.ReportViewer1.Focus();
+        }
+        
+     protected void OB11_Click(object sender, EventArgs e)
+        {
+            Get_ReportOT("OB11", "2020_OTB_LINE1", "OTC_Daily2020.rdlc");
+        }
